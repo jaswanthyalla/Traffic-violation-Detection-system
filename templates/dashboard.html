@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Traffic Violation Dashboard</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+
+<body>
+    <div class="dashboard">
+        <header class="header">
+            <h1>Traffic Violation Detection system</h1>
+            <p class="subtitle">Real-time traffic authority monitoring system</p>
+            <div class="header-status">
+                <span id="system-status" class="status-indicator online">● ONLINE</span>
+                <span id="last-update" class="timestamp">Last updated: now</span>
+            </div>
+        </header>
+
+        <div class="container">
+            <!-- Statistics Section -->
+            <section class="stats-section">
+                <div class="stat-card">
+                    <h3>Total Violations</h3>
+                    <p class="stat-value" id="stat-total">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Last 24 Hours</h3>
+                    <p class="stat-value" id="stat-24h">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>No Helmet</h3>
+                    <p class="stat-value" id="stat-helmet">0</p>
+                </div>
+                <div class="stat-card">
+                    <h3>Overloading</h3>
+                    <p class="stat-value" id="stat-overload">0</p>
+                </div>
+            </section>
+
+            <!-- Filters and Controls -->
+            <section class="controls-section">
+                <div class="filter-group">
+                    <label for="filter-type">Filter by Type:</label>
+                    <select id="filter-type">
+                        <option value="">All Violations</option>
+                        <option value="no_helmet">No Helmet</option>
+                        <option value="overloading">Overloading</option>
+                        <option value="no_plate">No License Plate</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="filter-status">Filter by Status:</label>
+                    <select id="filter-status">
+                        <option value="">All Status</option>
+                        <option value="pending">Pending</option>
+                        <option value="processed">Processed</option>
+                        <option value="dismissed">Dismissed</option>
+                    </select>
+                </div>
+                <div class="filter-group">
+                    <label for="refresh-rate">Refresh Rate:</label>
+                    <select id="refresh-rate">
+                        <option value="5000">5 seconds</option>
+                        <option value="10000" selected>10 seconds</option>
+                        <option value="30000">30 seconds</option>
+                        <option value="60000">1 minute</option>
+                    </select>
+                </div>
+                <button id="refresh-btn" class="btn btn-primary">Refresh Now</button>
+                <button id="auto-refresh-toggle" class="btn btn-secondary">Auto Refresh: ON</button>
+                <button id="settings-btn" class="btn btn-secondary">⚙️ Settings</button>
+            </section>
+
+            <!-- Capture Mode Section -->
+            <section class="capture-mode-section">
+                <div class="mode-selector">
+                    <div class="mode-option" id="mode-offline">
+                        <input type="radio" name="capture-mode" id="offline-mode" value="offline" checked>
+                        <label for="offline-mode">
+                            <span class="mode-icon">📁</span>
+                            <span class="mode-name">Offline</span>
+                            <span class="mode-desc">Process video files</span>
+                        </label>
+                    </div>
+                    <div class="mode-option" id="mode-online">
+                        <input type="radio" name="capture-mode" id="online-mode" value="online">
+                        <label for="online-mode">
+                            <span class="mode-icon">🎥</span>
+                            <span class="mode-name">Online</span>
+                            <span class="mode-desc">Live webcam capture</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Online Capture Controls -->
+                <div id="online-capture-controls" class="online-capture-controls" style="display:none;">
+                    <h3>Live Capture Settings</h3>
+
+                    <div style="margin-bottom: 15px; background: white; padding: 15px; border-radius: 6px;">
+                        <label style="font-weight: 600;">Stream URL (for Mobile/IP Camera): </label>
+                        <input type="text" id="direct-stream-url" placeholder="e.g. http://192.168.1.5:8080/video"
+                            style="padding: 8px; width: 60%; margin-right: 10px; border: 1px solid #ccc; border-radius: 4px;">
+                        <button class="btn btn-secondary" onclick="dashboard.saveDirectCameraConfig()">Save
+                            Camera</button>
+
+
+
+                        <img id="camera-feed" width="700" style="display:none; margin-top:15px;">
+                        <div class="capture-controls-grid">
+                            <button id="start-capture-btn" class="btn btn-primary">▶️ Start Capture</button>
+                            <button id="stop-capture-btn" class="btn btn-secondary" disabled>⏹️ Stop Capture</button>
+                        </div>
+                        <div id="live-capture-status" class="live-capture-status" style="display:none;">
+                            <p id="capture-status-text">Starting capture...</p>
+                            <div class="progress-bar">
+                                <div class="progress-fill" id="capture-progress-fill"></div>
+                            </div>
+                            <div class="capture-stats">
+                                <span>Frames: <strong id="frames-count">0</strong></span>
+                                <span>Violations: <strong id="capture-violations-count">0</strong></span>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+                </div>
+
+                <section class="video-section">
+                        <h2>Video Processing</h2>
+                        <div class="upload-container">
+                            <div class="upload-area" id="upload-area">
+                                <div class="upload-content">
+                                    <p class="upload-icon">📹</p>
+                                    <p class="upload-title">Upload Traffic Video</p>
+                                    <p class="upload-subtitle">Drag and drop or click to select (Max 500MB)</p>
+                                    <input type="file" id="video-input" accept="video/*" style="display:none;">
+                                    <button class="btn btn-primary"
+                                        onclick="document.getElementById('video-input').click()">
+                                        Select Video
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="processing-status" class="processing-status" style="display:none;">
+                                <p id="status-message">Processing...</p>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" id="progress-fill"></div>
+                                </div>
+                                <p id="progress-text">0%</p>
+                            </div>
+                        </div>
+
+                        <!-- Screenshots Gallery Removed -->
+                        <section class="violations-section">
+                            <h2>Recent Violations</h2>
+                            <div class="table-wrapper">
+                                <table class="violations-table">
+                                    <thead>
+                                        <tr>
+                                            <th>ID</th>
+                                            <th>Time</th>
+                                            <th>Type</th>
+                                            <th>Description</th>
+                                            <th>Plate #</th>
+                                            <th>Confidence</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="violations-tbody">
+                                        <tr class="loading-row">
+                                            <td colspan="8">Loading violations...</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal">
+            <div class="modal-content">
+                <span class="close"
+                    onclick="document.getElementById('settings-modal').style.display='none'">&times;</span>
+                <h2>Settings & Configuration</h2>
+                <div id="settings-body" class="settings-body">
+                    <div class="settings-group">
+                        <h3>Detection Settings</h3>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="helmet-detection" checked>
+                                Helmet Detection
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="plate-detection" checked>
+                                Plate Detection
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="overload-detection" checked>
+                                Overload Detection
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>Confidence Threshold:</label>
+                            <input type="range" id="confidence-threshold" min="0" max="100" value="45"
+                                style="width: 100%;">
+                            <span id="threshold-value">45%</span>
+                        </div>
+                    </div>
+                    <div class="settings-group">
+                        <h3>Online Capture Settings</h3>
+
+                        <div class="setting-item">
+                            <label>Webcam Device ID:</label>
+                            <input type="number" id="webcam-device" value="0" min="0">
+                        </div>
+                        <div class="setting-item">
+                            <label>Stream URL (for IP camera):</label>
+                            <input type="text" id="stream-url" placeholder="rtsp://user:pass@ip:port/stream">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="dashboard.saveSettings()">Save Settings</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Modal for violation details -->
+        <div id="violation-modal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2>Violation Details</h2>
+                <div id="modal-body">
+                    <!-- Content will be populated here -->
+                </div>
+            </div>
+        </div>
+
+        <script src="{{ url_for('static', filename='js/dashboard.js') }}?v=2"></script>
+</body>
+
+</html>
