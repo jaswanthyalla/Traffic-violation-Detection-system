@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+{% block header_title %}Connected Devices{% endblock %}
+{% block header_subtitle %}Manage IP cameras and edge nodes{% endblock %}
+
+{% block content %}
+<section class="bg-[#1a2030] border border-[#262f44] rounded-xl p-6 h-full relative">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-white">Camera Network</h2>
+        <button onclick="showAddDeviceModal()" class="bg-[#2563eb] hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
+            <i class="fa-solid fa-plus"></i> Add Device
+        </button>
+    </div>
+    
+    <div id="devicesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Devices injected by JS -->
+    </div>
+</section>
+
+<!-- Add Device Modal -->
+<div id="addDeviceModal" class="fixed inset-0 bg-black/60 flex items-center justify-center z-50 hidden">
+    <div class="bg-[#1a2030] border border-[#262f44] rounded-xl p-6 w-[400px]">
+        <h2 class="text-lg font-bold text-white mb-4">Add New Device</h2>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1">Device Name</label>
+                <input type="text" id="devName" class="w-full bg-[#111623] border border-[#262f44] rounded p-2 text-white focus:outline-none focus:border-blue-500" placeholder="e.g. Main Gate Camera">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1">IP Address / Stream URL</label>
+                <input type="text" id="devIp" class="w-full bg-[#111623] border border-[#262f44] rounded p-2 text-white focus:outline-none focus:border-blue-500" placeholder="e.g. http://192.168.1.50:8080/video">
+            </div>
+            <div>
+                <label class="block text-xs font-bold text-slate-400 mb-1">Resolution</label>
+                <select id="devRes" class="w-full bg-[#111623] border border-[#262f44] rounded p-2 text-white focus:outline-none focus:border-blue-500">
+                    <option value="1080p">1080p</option>
+                    <option value="720p">720p</option>
+                    <option value="4K">4K</option>
+                </select>
+            </div>
+            <div class="flex justify-end gap-3 mt-6">
+                <button onclick="hideAddDeviceModal()" class="px-4 py-2 text-slate-400 hover:text-white transition-colors">Cancel</button>
+                <button onclick="submitNewDevice()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-colors font-medium">Save Device</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    async function fetchDevices() {
+        try {
+            const res = await fetch('/api/devices');
+            const data = await res.json();
+            if(data.success) {
+                renderDevices(data.devices);
+            }
+        } catch(err) { console.error("Error fetching devices:", err); }
+    }
+
+    function renderDevices(devices) {
+        const grid = document.getElementById('devicesGrid');
+        if(devices.length === 0) {
+            grid.innerHTML = '<p class="text-slate-400 col-span-2">No devices registered. Click "Add Device" to register a new camera.</p>';
+            return;
+        }
+
+        grid.innerHTML = devices.map(d => `
+            <div class="bg-[#111623] border border-[#262f44] rounded-xl p-5 flex gap-4 items-center group">
+                <div class="relative">
+                    <div class="w-16 h-16 rounded-full bg-blue-500/10 border border-blue-500/30 flex items-center justify-center text-blue-500 text-2xl">
+                        <i class="fa-solid fa-video"></i>
+                    </div>
+                    <span class="absolute bottom-0 right-0 w-4 h-4 bg-emerald-500 border-2 border-[#111623] rounded-full"></span>
+                </div>
+                <div class="flex-1 overflow-hidden">
+                    <h3 class="text-sm font-bold text-white truncate">${d.name}</h3>
+                    <p class="text-xs text-slate-400 truncate">${d.ip_address}</p>
+                    <div class="flex gap-2 mt-2">
+                        <span class="text-[9px] bg-[#1e2536] text-slate-300 px-2 py-0.5 rounded uppercase font-bold tracking-wider">${d.resolution}</span>
+                        <span class="text-[9px] bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-2 py-0.5 rounded uppercase font-bold tracking-wider">${d.status}</span>
+                    </div>
+                </div>
+                <button onclick="deleteDevice(${d.id})" class="w-8 h-8 rounded bg-[#1e2536] hover:bg-rose-500/20 hover:text-rose-400 text-slate-300 flex items-center justify-center transition-colors opacity-0 group-hover:opacity-100" title="Remove Device">
+                    <i class="fa-solid fa-trash"></i>
+                </button>
+            </div>
+        `).join('');
+    }
+
+    function showAddDeviceModal() {
+        document.getElementById('addDeviceModal').classList.remove('hidden');
+    }
+
+    function hideAddDeviceModal() {
+        document.getElementById('addDeviceModal').classList.add('hidden');
+        document.getElementById('devName').value = '';
+        document.getElementById('devIp').value = '';
+    }
+
+    async function submitNewDevice() {
+        const name = document.getElementById('devName').value.trim();
+        const ip_address = document.getElementById('devIp').value.trim();
+        const resolution = document.getElementById('devRes').value;
+
+        if(!name || !ip_address) {
+            alert('Name and IP address are required.');
+            return;
+        }
+
+        try {
+            const res = await fetch('/api/devices', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name, ip_address, resolution})
+            });
+            const data = await res.json();
+            if(data.success) {
+                hideAddDeviceModal();
+                fetchDevices();
+            } else {
+                alert(data.error);
+            }
+        } catch(err) {
+            console.error(err);
+            alert("Error adding device.");
+        }
+    }
+
+    async function deleteDevice(id) {
+        if(!confirm('Are you sure you want to remove this device?')) return;
+        try {
+            const res = await fetch('/api/devices/' + id, {method: 'DELETE'});
+            const data = await res.json();
+            if(data.success) {
+                fetchDevices();
+            } else {
+                alert("Failed to delete device.");
+            }
+        } catch(err) { console.error(err); }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchDevices);
+</script>
+{% endblock %}

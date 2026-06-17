@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block header_title %}System Logs{% endblock %}
+{% block header_subtitle %}Live backend debugging and traces{% endblock %}
+
+{% block content %}
+<section class="bg-black border border-[#262f44] rounded-xl flex flex-col h-[600px] overflow-hidden shadow-2xl">
+    <div class="bg-[#1e2536] border-b border-[#262f44] px-4 py-2 flex justify-between items-center">
+        <div class="flex gap-2">
+            <div class="w-3 h-3 rounded-full bg-rose-500"></div>
+            <div class="w-3 h-3 rounded-full bg-amber-500"></div>
+            <div class="w-3 h-3 rounded-full bg-emerald-500"></div>
+        </div>
+        <span class="text-xs font-mono text-slate-400">logs/system.log</span>
+        <button class="text-slate-400 hover:text-white" title="Export Logs"><i class="fa-solid fa-download"></i></button>
+    </div>
+    <div id="log-container" class="p-4 font-mono text-xs overflow-y-auto flex-1 text-slate-300">
+        <div class="text-slate-500 mb-1 flex items-center"><span class="animate-pulse mr-2 block w-2 h-4 bg-white/50"></span> Connecting to log stream...</div>
+    </div>
+</section>
+
+<script>
+    const logContainer = document.getElementById('log-container');
+    let lastLogContent = "";
+
+    function formatLogLine(line) {
+        let formatted = line;
+        if (formatted.includes(' - INFO - ')) {
+            formatted = formatted.replace(' - INFO - ', ' <span class="text-blue-400 font-bold">INFO</span> - ');
+        } else if (formatted.includes(' - WARNING - ')) {
+            formatted = formatted.replace(' - WARNING - ', ' <span class="text-amber-400 font-bold">WARN</span> - ');
+        } else if (formatted.includes(' - ERROR - ')) {
+            formatted = formatted.replace(' - ERROR - ', ' <span class="text-rose-500 font-bold">ERROR</span> - ');
+        }
+        
+        // Colorize timestamps if they match standard ISO-ish format at the start
+        formatted = formatted.replace(/^(\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2},\d{3})/, '<span class="text-slate-500">[$1]</span>');
+        
+        return formatted;
+    }
+
+    async function fetchLogs() {
+        try {
+            const res = await fetch('/api/logs');
+            const data = await res.json();
+            
+            if (data.success && data.logs) {
+                // To prevent heavy DOM manipulation, only re-render if the last line changed or length changed
+                const currentContent = data.logs.length > 0 ? data.logs[data.logs.length - 1] + data.logs.length : "empty";
+                
+                if (currentContent !== lastLogContent) {
+                    logContainer.innerHTML = '';
+                    data.logs.forEach(line => {
+                        if (line.trim() === '') return;
+                        const div = document.createElement('div');
+                        div.className = 'mb-1 break-all';
+                        div.innerHTML = formatLogLine(line.trim());
+                        logContainer.appendChild(div);
+                    });
+                    
+                    // Add the blinking cursor
+                    const cursorDiv = document.createElement('div');
+                    cursorDiv.className = 'text-slate-500 mt-4 flex items-center';
+                    cursorDiv.innerHTML = '<span class="animate-pulse mr-2 block w-2 h-4 bg-white/50"></span> Waiting for new logs...';
+                    logContainer.appendChild(cursorDiv);
+                    
+                    // Auto scroll to bottom
+                    logContainer.scrollTop = logContainer.scrollHeight;
+                    lastLogContent = currentContent;
+                }
+            }
+        } catch (err) {
+            console.error("Failed to fetch logs:", err);
+        }
+    }
+
+    // Fetch immediately and then poll every 2 seconds
+    fetchLogs();
+    setInterval(fetchLogs, 2000);
+</script>
+{% endblock %}

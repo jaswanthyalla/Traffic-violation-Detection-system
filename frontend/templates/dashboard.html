@@ -1,0 +1,317 @@
+{% extends "base.html" %}
+
+{% block content %}
+<!-- Stats Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <!-- Total -->
+    <div class="bg-[#0f213b] border border-[#1e3a8a] rounded-xl p-4 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-[#1a498b] flex flex-shrink-0 items-center justify-center text-white text-2xl shadow-inner">
+            <i class="fa-solid fa-clipboard-list"></i>
+        </div>
+        <div>
+            <h3 class="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">Total Violations</h3>
+            <p class="text-2xl font-bold text-white leading-none mb-1" id="stat-total">0</p>
+            <p class="text-[10px] text-slate-400">All time recorded</p>
+        </div>
+    </div>
+    <!-- 24h -->
+    <div class="bg-[#0f2d1e] border border-[#065f46] rounded-xl p-4 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-[#127236] flex flex-shrink-0 items-center justify-center text-white text-2xl shadow-inner">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div>
+            <h3 class="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">Last 24 Hours</h3>
+            <p class="text-2xl font-bold text-white leading-none mb-1" id="stat-24h">0</p>
+            <p class="text-[10px] text-slate-400">Violations detected</p>
+        </div>
+    </div>
+    <!-- Helmet -->
+    <div class="bg-[#291742] border border-[#4c1d95] rounded-xl p-4 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-[#5d2192] flex flex-shrink-0 items-center justify-center text-white text-2xl shadow-inner">
+            <i class="fa-solid fa-helmet-safety"></i>
+        </div>
+        <div>
+            <h3 class="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">No Helmet</h3>
+            <p class="text-2xl font-bold text-white leading-none mb-1" id="stat-helmet">0</p>
+            <p class="text-[10px] text-slate-400">Violations detected</p>
+        </div>
+    </div>
+    <!-- Overloading -->
+    <div class="bg-[#331c0e] border border-[#78350f] rounded-xl p-4 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-[#b05e15] flex flex-shrink-0 items-center justify-center text-white text-2xl shadow-inner">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+            <h3 class="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">Overloading</h3>
+            <p class="text-2xl font-bold text-white leading-none mb-1" id="stat-overload">0</p>
+            <p class="text-[10px] text-slate-400">Violations detected</p>
+        </div>
+    </div>
+</section>
+
+<!-- Filters Section -->
+<section class="bg-[#1a2030] border border-[#262f44] rounded-xl p-4 mb-6 flex flex-wrap items-end gap-4">
+    <div class="flex-1 min-w-[150px]">
+        <label for="filter-type" class="block text-[11px] text-slate-400 mb-1.5 ml-1">Filter by Type</label>
+        <div class="relative">
+            <select id="filter-type" class="w-full bg-[#111623] border border-[#262f44] text-slate-200 text-xs rounded-lg block p-2.5 appearance-none focus:outline-none focus:border-blue-500">
+                <option value="">All Violations</option>
+                <option value="no_helmet">No Helmet</option>
+                <option value="overloading">Overloading</option>
+                <option value="no_plate">No License Plate</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
+        </div>
+    </div>
+    
+    <div class="flex-1 min-w-[150px]">
+        <label for="filter-status" class="block text-[11px] text-slate-400 mb-1.5 ml-1">Filter by Status</label>
+        <div class="relative">
+            <select id="filter-status" class="w-full bg-[#111623] border border-[#262f44] text-slate-200 text-xs rounded-lg block p-2.5 appearance-none focus:outline-none focus:border-blue-500">
+                <option value="">All Status</option>
+                <option value="pending">Pending</option>
+                <option value="processed">Processed</option>
+                <option value="dismissed">Dismissed</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
+        </div>
+    </div>
+
+    <div class="flex-1 min-w-[150px]">
+        <label for="refresh-rate" class="block text-[11px] text-slate-400 mb-1.5 ml-1">Refresh Rate</label>
+        <div class="relative">
+            <select id="refresh-rate" class="w-full bg-[#111623] border border-[#262f44] text-slate-200 text-xs rounded-lg block p-2.5 appearance-none focus:outline-none focus:border-blue-500">
+                <option value="5000">5 seconds</option>
+                <option value="10000" selected>10 seconds</option>
+                <option value="30000">30 seconds</option>
+                <option value="60000">1 minute</option>
+            </select>
+            <i class="fa-solid fa-chevron-down absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs pointer-events-none"></i>
+        </div>
+    </div>
+    
+    <div class="flex items-center gap-3 ml-auto mt-2 xl:mt-0">
+        <button id="refresh-btn" class="bg-[#2563eb] hover:bg-blue-600 text-white text-xs font-semibold py-2.5 px-4 rounded-lg transition-colors flex items-center gap-2">
+            <i class="fa-solid fa-arrows-rotate"></i> Refresh Now
+        </button>
+        <button id="auto-refresh-toggle" class="bg-[#111623] border border-[#262f44] text-slate-300 text-xs font-semibold py-2.5 px-4 rounded-lg transition-colors flex items-center gap-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Auto Refresh: ON
+        </button>
+        <button class="bg-[#111623] border border-[#262f44] text-slate-400 hover:text-white py-2.5 px-3 rounded-lg transition-colors" onclick="document.getElementById('settings-modal').style.display='flex'">
+            <i class="fa-solid fa-gear"></i>
+        </button>
+    </div>
+</section>
+
+<!-- Input Source -->
+<section class="bg-[#1a2030] border border-[#262f44] rounded-xl p-5 mb-6">
+    <h2 class="text-sm font-bold text-white mb-4">Input Source</h2>
+    
+    <div class="flex flex-col sm:flex-row gap-4 mb-6">
+        <!-- Offline Tab -->
+        <div class="flex-1" id="mode-offline">
+            <input type="radio" name="capture-mode" id="offline-mode" value="offline" checked class="peer hidden">
+            <label for="offline-mode" class="cursor-pointer flex items-center gap-4 p-4 rounded-xl border border-[#262f44] bg-[#111623] peer-checked:border-blue-500 peer-checked:bg-[#152344] transition-colors relative">
+                <div class="w-10 h-10 rounded-lg bg-blue-500 flex items-center justify-center text-white text-lg shadow-inner">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <div class="flex-1">
+                    <span class="block font-semibold text-white text-sm">Offline Processing</span>
+                    <span class="block text-xs text-slate-400">Upload & analyze video files</span>
+                </div>
+                <div class="w-4 h-4 rounded-full border-2 border-slate-500 peer-checked:border-blue-500 flex items-center justify-center ml-auto">
+                    <div class="w-2 h-2 rounded-full bg-blue-500 hidden peer-checked:block"></div>
+                </div>
+            </label>
+        </div>
+        <!-- Online Tab -->
+        <div class="flex-1" id="mode-online">
+            <input type="radio" name="capture-mode" id="online-mode" value="online" class="peer hidden">
+            <label for="online-mode" class="cursor-pointer flex items-center gap-4 p-4 rounded-xl border border-[#262f44] bg-[#111623] peer-checked:border-blue-500 peer-checked:bg-[#152344] transition-colors relative">
+                <div class="w-10 h-10 rounded-lg bg-purple-700 flex items-center justify-center text-white text-lg shadow-inner">
+                    <i class="fa-solid fa-video"></i>
+                </div>
+                <div class="flex-1">
+                    <span class="block font-semibold text-white text-sm">Live Capture</span>
+                    <span class="block text-xs text-slate-400">Real-time camera feed</span>
+                </div>
+                <div class="w-4 h-4 rounded-full border-2 border-slate-500 peer-checked:border-blue-500 flex items-center justify-center ml-auto">
+                    <div class="w-2 h-2 rounded-full bg-blue-500 hidden peer-checked:block"></div>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    <!-- Upload Box (Offline) -->
+    <div id="upload-area" class="video-section border border-dashed border-[#3a4663] bg-[#141a29] rounded-xl p-8 text-center cursor-pointer hover:border-blue-500 transition-colors" onclick="document.getElementById('video-input').click()">
+        <div class="w-12 h-12 rounded-full bg-blue-500 mx-auto flex items-center justify-center text-white text-xl mb-3 shadow-lg shadow-blue-500/20">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <h3 class="text-sm font-bold text-white">Click to upload video</h3>
+        <p class="text-xs text-slate-400 mt-1">MP4, AVI, MKV up to 500MB</p>
+        <input type="file" id="video-input" accept="video/*" class="hidden">
+    </div>
+    
+    <div id="processing-status" class="mt-4 bg-[#111623] border border-[#262f44] p-4 rounded-lg" style="display:none;">
+        <div class="flex justify-between items-center mb-2">
+            <p id="status-message" class="text-xs font-semibold text-slate-300">Processing Video...</p>
+            <p id="progress-text" class="text-xs font-bold text-blue-400">0%</p>
+        </div>
+        <div class="w-full bg-[#1e2536] rounded-full h-1.5">
+            <div class="bg-blue-500 h-1.5 rounded-full transition-all duration-300" style="width: 0%" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Live Capture Controls -->
+    <div id="online-capture-controls" class="mt-4 pt-4 border-t border-[#262f44]" style="display:none;">
+        <div class="flex flex-col sm:flex-row gap-3 mb-4">
+            <div class="flex-1 relative">
+                <input type="text" id="direct-stream-url" placeholder="http://192.168.1.5:8080/video" class="w-full bg-[#111623] border border-[#262f44] text-slate-200 rounded-lg px-3 py-2.5 text-xs focus:outline-none focus:border-blue-500">
+            </div>
+            <button class="bg-[#1e2536] hover:bg-[#2a3449] text-slate-300 border border-[#262f44] text-xs font-semibold py-2.5 px-4 rounded-lg transition-colors" onclick="dashboard.saveDirectCameraConfig()">
+                Save
+            </button>
+        </div>
+        
+        <div class="bg-[#111623] border border-[#262f44] rounded-lg p-4 flex flex-col items-center">
+            <img id="camera-feed" class="rounded border border-[#262f44] max-w-full md:max-w-xl bg-black min-h-[250px] mb-4" style="display:none;" alt="Live Feed">
+            
+            <div class="flex gap-3">
+                <button id="start-capture-btn" class="bg-[#2563eb] hover:bg-blue-600 text-white font-medium py-2 px-6 rounded-lg transition-colors text-xs">
+                    Start Stream
+                </button>
+                <button id="stop-capture-btn" class="bg-[#1e2536] hover:bg-[#2a3449] text-slate-300 border border-[#262f44] font-medium py-2 px-6 rounded-lg transition-colors text-xs disabled:opacity-50" disabled>
+                    Stop Stream
+                </button>
+            </div>
+            
+            <div id="live-capture-status" class="mt-4 w-full max-w-sm bg-[#141a29] border border-[#262f44] p-4 rounded-lg" style="display:none;">
+                <p id="capture-status-text" class="text-[10px] font-bold text-emerald-500 mb-2 uppercase tracking-wide">Recording active</p>
+                <div class="w-full bg-[#1e2536] rounded-full h-1 mb-3">
+                    <div class="bg-blue-500 h-1 rounded-full w-1/3" id="capture-progress-fill"></div>
+                </div>
+                <div class="flex justify-between text-xs font-medium">
+                    <span class="text-slate-500">Frames: <strong id="frames-count" class="text-slate-300">0</strong></span>
+                    <span class="text-slate-500">Violations: <strong id="capture-violations-count" class="text-rose-500">0</strong></span>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Violations Table -->
+<section class="bg-[#1a2030] border border-[#262f44] rounded-xl flex flex-col overflow-hidden">
+    <div class="px-5 py-4 border-b border-[#262f44] flex justify-between items-center bg-[#1e2536]">
+        <h2 class="text-sm font-bold text-white flex items-center gap-2">
+            <i class="fa-solid fa-bell-concierge text-blue-500"></i> Recent Violations
+        </h2>
+        <div class="bg-[#123675] border border-[#1e489a] text-blue-200 text-[10px] font-bold px-2.5 py-1.5 rounded flex items-center gap-1.5">
+            <i class="fa-solid fa-tower-broadcast text-blue-400"></i> Live Sync
+        </div>
+    </div>
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-xs text-left text-slate-300">
+            <thead class="text-[10px] text-slate-400 uppercase bg-[#141a29] border-b border-[#262f44]">
+                <tr>
+                    <th scope="col" class="px-5 py-3 font-semibold">ID</th>
+                    <th scope="col" class="px-5 py-3 font-semibold">Time</th>
+                    <th scope="col" class="px-5 py-3 font-semibold">Type</th>
+                    <th scope="col" class="px-5 py-3 font-semibold">Description</th>
+                    <th scope="col" class="px-5 py-3 font-semibold">Plate #</th>
+                    <th scope="col" class="px-5 py-3 font-semibold">Conf.</th>
+                    <th scope="col" class="px-5 py-3 font-semibold">Status</th>
+                    <th scope="col" class="px-5 py-3 font-semibold text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody id="violations-tbody" class="divide-y divide-[#262f44]">
+                <tr class="loading-row">
+                    <td colspan="8" class="px-5 py-12 text-center text-slate-500">
+                        <div class="flex flex-col items-center justify-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-[#111623] border border-[#262f44] flex items-center justify-center text-slate-600 mb-2">
+                                <i class="fa-solid fa-inbox text-xl"></i>
+                            </div>
+                            <p>No violations recorded</p>
+                        </div>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}
+
+{% block modals %}
+<!-- Settings Modal -->
+<div id="settings-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style="display:none;">
+    <div class="bg-[#1a2030] border border-[#262f44] rounded-xl shadow-2xl w-full max-w-md overflow-hidden">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-[#262f44] bg-[#1e2536]">
+            <h2 class="text-sm font-bold text-white">Settings</h2>
+            <button class="text-slate-400 hover:text-white transition-colors" onclick="document.getElementById('settings-modal').style.display='none'">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div class="p-6">
+            <div class="mb-6">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Detection Settings</h3>
+                <div class="space-y-3">
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="helmet-detection" checked class="w-4 h-4 rounded bg-[#111623] border-[#262f44] text-blue-500 focus:ring-0 focus:ring-offset-0">
+                        <span class="text-xs font-medium text-slate-300">Helmet Detection</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="plate-detection" checked class="w-4 h-4 rounded bg-[#111623] border-[#262f44] text-blue-500 focus:ring-0 focus:ring-offset-0">
+                        <span class="text-xs font-medium text-slate-300">Plate Detection</span>
+                    </label>
+                    <label class="flex items-center gap-3 cursor-pointer">
+                        <input type="checkbox" id="overload-detection" checked class="w-4 h-4 rounded bg-[#111623] border-[#262f44] text-blue-500 focus:ring-0 focus:ring-offset-0">
+                        <span class="text-xs font-medium text-slate-300">Overload Detection</span>
+                    </label>
+                </div>
+                
+                <div class="mt-4 bg-[#111623] border border-[#262f44] p-3 rounded-lg">
+                    <label class="flex justify-between text-xs text-slate-400 mb-2">
+                        Confidence Threshold
+                        <span id="threshold-value" class="font-bold text-white">45%</span>
+                    </label>
+                    <input type="range" id="confidence-threshold" min="0" max="100" value="45" class="w-full h-1 bg-[#262f44] rounded-lg appearance-none cursor-pointer accent-blue-500">
+                </div>
+            </div>
+            
+            <div class="mb-6">
+                <h3 class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mb-3">Camera Settings</h3>
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">Webcam Device ID:</label>
+                        <input type="number" id="webcam-device" value="0" min="0" class="w-full bg-[#111623] border border-[#262f44] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs text-slate-400 mb-1">IP Camera Stream URL:</label>
+                        <input type="text" id="stream-url" placeholder="rtsp://user:pass@ip:port/stream" class="w-full bg-[#111623] border border-[#262f44] rounded-lg px-3 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    </div>
+                </div>
+            </div>
+            <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-4 rounded-lg transition-colors text-xs" onclick="dashboard.saveSettings(); document.getElementById('settings-modal').style.display='none'">Save Settings</button>
+        </div>
+    </div>
+</div>
+
+<!-- Modal for violation details -->
+<div id="violation-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-black/60 backdrop-blur-sm" style="display:none;">
+    <div class="bg-[#1a2030] border border-[#262f44] rounded-xl shadow-2xl w-full max-w-2xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div class="flex items-center justify-between px-6 py-4 border-b border-[#262f44] bg-[#1e2536]">
+            <h2 class="text-sm font-bold text-white">Violation Details</h2>
+            <button class="text-slate-400 hover:text-white transition-colors" onclick="document.getElementById('violation-modal').style.display='none'">
+                <i class="fa-solid fa-xmark text-lg"></i>
+            </button>
+        </div>
+        <div id="modal-body" class="p-6 overflow-y-auto text-slate-300 text-sm">
+            <!-- Content will be populated here by JS -->
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}?v=2"></script>
+{% endblock %}

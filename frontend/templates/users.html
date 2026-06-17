@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block header_title %}User Management{% endblock %}
+{% block header_subtitle %}Manage operators and access control{% endblock %}
+
+{% block content %}
+<section class="bg-[#1a2030] border border-[#262f44] rounded-xl p-6 h-full">
+    <div class="flex justify-between items-center mb-6">
+        <h2 class="text-lg font-bold text-white">System Users</h2>
+        <button class="bg-[#2563eb] hover:bg-blue-600 text-white font-medium py-2 px-4 rounded-lg transition-colors text-sm flex items-center gap-2">
+            <i class="fa-solid fa-user-plus"></i> Add User
+        </button>
+    </div>
+    
+    <div class="border border-[#262f44] rounded-lg overflow-hidden">
+        <table class="w-full text-sm text-left text-slate-300">
+            <thead class="text-xs text-slate-400 uppercase bg-[#141a29] border-b border-[#262f44]">
+                <tr>
+                    <th scope="col" class="px-6 py-4">Name</th>
+                    <th scope="col" class="px-6 py-4">Role</th>
+                    <th scope="col" class="px-6 py-4">Status</th>
+                    <th scope="col" class="px-6 py-4">Last Login</th>
+                    <th scope="col" class="px-6 py-4 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-[#262f44] bg-[#111623]">
+                {% for u in users %}
+                <tr>
+                    <td class="px-6 py-4 font-bold text-white flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full {% if u.role == 'admin' %}bg-purple-600{% else %}bg-emerald-600{% endif %} flex items-center justify-center text-xs">
+                            {{ u.name[0] if u.name else 'U' }}
+                        </div>
+                        <div>
+                            <p>{{ u.name }}</p>
+                            <p class="text-xs text-slate-500 font-normal mt-0.5">@{{ u.username }}</p>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if u.role == 'admin' %}
+                        <span class="bg-purple-500/20 text-purple-400 border border-purple-500/20 px-2 py-1 rounded text-xs font-bold uppercase">Administrator</span>
+                        {% else %}
+                        <span class="bg-emerald-500/20 text-emerald-400 border border-emerald-500/20 px-2 py-1 rounded text-xs font-bold uppercase">Desk Officer</span>
+                        {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-emerald-500 font-bold flex items-center gap-2">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.8)]"></span> Active
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-slate-400 text-xs">
+                        {{ u.last_login if u.last_login else 'Never' }}
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <button class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-pen"></i></button>
+                    </td>
+                </tr>
+                {% else %}
+                <tr>
+                    <td colspan="5" class="px-6 py-8 text-center text-slate-500">No users found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

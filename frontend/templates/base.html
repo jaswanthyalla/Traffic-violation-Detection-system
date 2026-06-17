@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Traffic Violation Dashboard{% endblock %}</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { 
+            background-color: #141a29 !important; 
+            color: #f1f5f9 !important; 
+            font-family: 'Inter', sans-serif !important;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        /* Hide scrollbar for sidebar */
+        .sidebar::-webkit-scrollbar { display: none; }
+        .sidebar { -ms-overflow-style: none; scrollbar-width: none; }
+        
+        /* Custom scrollbar for main content */
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
+        ::-webkit-scrollbar-track { background: #141a29; }
+        ::-webkit-scrollbar-thumb { background: #2a3449; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #3b4863; }
+        
+        /* Override default style.css badge/button classes */
+        .type-badge { padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.65rem; display: inline-block; text-transform: uppercase; letter-spacing: 0.05em; }
+        .type-no_helmet { background-color: rgba(124, 58, 237, 0.2) !important; color: #c4b5fd !important; border: 1px solid rgba(124, 58, 237, 0.5); }
+        .type-overloading { background-color: rgba(217, 119, 6, 0.2) !important; color: #fcd34d !important; border: 1px solid rgba(217, 119, 6, 0.5); }
+        .type-no_plate { background-color: rgba(239, 68, 68, 0.2) !important; color: #fca5a5 !important; border: 1px solid rgba(239, 68, 68, 0.5); }
+        
+        .status-badge { padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-weight: 600; font-size: 0.65rem; display: inline-flex; align-items: center; gap: 0.25rem; text-transform: uppercase; }
+        .status-pending { background-color: rgba(217, 119, 6, 0.1) !important; color: #fbbf24 !important; border: 1px solid rgba(217, 119, 6, 0.3); }
+        .status-processed { background-color: rgba(16, 185, 129, 0.1) !important; color: #34d399 !important; border: 1px solid rgba(16, 185, 129, 0.3); }
+        .status-dismissed { background-color: rgba(100, 116, 139, 0.1) !important; color: #94a3b8 !important; border: 1px solid rgba(100, 116, 139, 0.3); }
+        
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.65rem; border-radius: 0.25rem; font-weight: 600; transition: all 0.2s; cursor: pointer; text-transform: uppercase; }
+        .btn-view { background-color: rgba(37, 99, 235, 0.2) !important; color: #93c5fd !important; border: 1px solid rgba(37, 99, 235, 0.5) !important; }
+        .btn-view:hover { background-color: rgba(37, 99, 235, 0.4) !important; }
+        .btn-process { background-color: rgba(16, 185, 129, 0.2) !important; color: #6ee7b7 !important; border: 1px solid rgba(16, 185, 129, 0.5) !important; }
+        .btn-process:hover { background-color: rgba(16, 185, 129, 0.4) !important; }
+        
+        table.violations-table td { border-bottom-color: #262f44 !important; padding-top: 0.75rem; padding-bottom: 0.75rem; }
+
+        /* 3D Sidebar Styles */
+        .sidebar-wrapper {
+            perspective: 1200px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            width: 16rem;
+            position: relative;
+            z-index: 40;
+            flex-shrink: 0;
+        }
+        .sidebar-wrapper.collapsed {
+            width: 0;
+        }
+        .sidebar-inner {
+            width: 16rem;
+            height: 100%;
+            transform-origin: left center;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.5s;
+        }
+        .sidebar-wrapper.collapsed .sidebar-inner {
+            transform: rotateY(-90deg);
+            opacity: 0;
+        }
+        
+        .sidebar-toggle {
+            position: absolute;
+            top: 1.5rem;
+            right: -1.25rem;
+            width: 2.5rem;
+            height: 2.5rem;
+            background: #2563eb;
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1), background-color 0.2s;
+            z-index: 50;
+            border: 4px solid #141a29;
+        }
+        .sidebar-toggle:hover {
+            background: #3b82f6;
+        }
+        .sidebar-wrapper.collapsed .sidebar-toggle {
+            transform: translateX(1.25rem) rotate(180deg);
+        }
+    </style>
+</head>
+<body class="flex h-screen overflow-hidden">
+    
+    <!-- Sidebar -->
+    <div class="sidebar-wrapper" id="sidebar-wrapper">
+        <button class="sidebar-toggle" onclick="toggleSidebar()" id="sidebar-toggle-btn" title="Toggle Sidebar">
+            <i class="fa-solid fa-chevron-left"></i>
+        </button>
+        <aside class="sidebar-inner bg-[#0b285b] flex flex-col h-full relative z-20 sidebar overflow-y-auto border-r border-[#153b82]">
+            <div class="p-6 flex items-center gap-3">
+                <div class="w-8 h-8 rounded bg-blue-500 flex items-center justify-center text-white">
+                    <i class="fa-solid fa-shield-halved text-lg"></i>
+                </div>
+                <h2 class="text-2xl font-bold text-white tracking-wide">TVS</h2>
+            </div>
+        
+        <nav class="flex-1 px-3 py-4 space-y-1">
+            <a href="{{ url_for('index') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'index' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-house w-5 text-center {% if request.endpoint == 'index' %}text-blue-200{% endif %}"></i>
+                Dashboard
+            </a>
+            {% if session.get('role') == 'admin' %}
+            <a href="{{ url_for('violations_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'violations_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-triangle-exclamation w-5 text-center"></i>
+                Violations
+            </a>
+            <a href="{{ url_for('live_capture_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'live_capture_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-video w-5 text-center"></i>
+                Live Capture
+            </a>
+            {% endif %}
+            <a href="{{ url_for('analytics_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'analytics_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-chart-line w-5 text-center"></i>
+                Analytics
+            </a>
+            <a href="{{ url_for('reports_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'reports_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-file-lines w-5 text-center"></i>
+                Reports
+            </a>
+            {% if session.get('role') == 'admin' %}
+            <a href="{{ url_for('devices_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'devices_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-desktop w-5 text-center"></i>
+                Devices
+            </a>
+            <a href="{{ url_for('settings_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'settings_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-gear w-5 text-center"></i>
+                Settings
+            </a>
+            <a href="{{ url_for('users_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'users_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-regular fa-user w-5 text-center"></i>
+                Users
+            </a>
+            {% endif %}
+            <a href="{{ url_for('alerts_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'alerts_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-regular fa-bell w-5 text-center"></i>
+                Alerts
+            </a>
+            <a href="{{ url_for('logs_page') }}" class="flex items-center gap-3 px-4 py-3 {% if request.endpoint == 'logs_page' %}bg-[#1e489a] text-white shadow-inner shadow-white/10{% else %}text-blue-200 hover:bg-[#123675] hover:text-white{% endif %} rounded-lg font-medium transition-colors">
+                <i class="fa-solid fa-server w-5 text-center"></i>
+                Logs
+            </a>
+        </nav>
+        
+        <div class="p-4 mt-auto border-t border-[#153b82]">
+            <div class="flex items-center gap-3 hover:bg-[#123675] p-2 rounded-lg transition-colors group relative">
+                <div class="w-10 h-10 rounded-full bg-[#1e489a] flex items-center justify-center text-white font-bold">
+                    {{ session.get('name', 'A')[0] }}
+                </div>
+                <div class="flex-1">
+                    <p class="text-sm font-bold text-white truncate max-w-[120px]">{{ session.get('name', 'Authority') }}</p>
+                    <p class="text-xs text-blue-300 capitalize">{{ session.get('role', 'Administrator') }}</p>
+                </div>
+                <a href="{{ url_for('logout') }}" class="text-slate-400 hover:text-rose-400 transition-colors" title="Secure Logout">
+                    <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                </a>
+            </div>
+        </div>
+        </aside>
+    </div>
+    
+    <!-- Main Content -->
+    <main class="flex-1 flex flex-col h-full overflow-y-auto relative z-10 p-6 md:p-8">
+        
+        <!-- Header -->
+        <header class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-white flex items-center gap-2">
+                    {% block header_title %}Traffic Violation System{% endblock %} <i class="fa-solid fa-chevron-down text-slate-500 text-sm ml-1"></i>
+                </h1>
+                <p class="text-sm text-slate-400 mt-1">{% block header_subtitle %}Authority Monitoring Dashboard{% endblock %}</p>
+            </div>
+            <div class="flex items-center gap-4 text-xs font-medium">
+                <span id="last-update" class="text-slate-400">Last updated: <span id="time-display">...</span></span>
+                <div id="system-status" class="flex items-center gap-1.5 px-3 py-1 rounded-full border border-[#0d5930] bg-[#092b1a] text-[#22c55e]">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    ONLINE
+                </div>
+            </div>
+        </header>
+
+        {% block content %}
+        {% endblock %}
+        
+    </main>
+
+    {% block modals %}
+    {% endblock %}
+    
+    <!-- Time update script -->
+    <script>
+        setInterval(() => {
+            const timeDisplay = document.getElementById('time-display');
+            if (timeDisplay) timeDisplay.textContent = new Date().toLocaleTimeString();
+        }, 1000);
+    </script>
+
+    <!-- Sidebar Toggle Logic -->
+    <script>
+        function toggleSidebar() {
+            const wrapper = document.getElementById('sidebar-wrapper');
+            wrapper.classList.toggle('collapsed');
+            const isCollapsed = wrapper.classList.contains('collapsed');
+            localStorage.setItem('sidebarCollapsed', isCollapsed);
+        }
+        
+        document.addEventListener('DOMContentLoaded', () => {
+            if (localStorage.getItem('sidebarCollapsed') === 'true') {
+                document.getElementById('sidebar-wrapper').classList.add('collapsed');
+            }
+        });
+    </script>
+    
+    {% block scripts %}
+    {% endblock %}
+</body>
+</html>

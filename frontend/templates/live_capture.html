@@ -1,0 +1,114 @@
+{% extends "base.html" %}
+{% block header_title %}Live Capture & Processing{% endblock %}
+{% block header_subtitle %}Process offline videos or connect to live camera streams{% endblock %}
+
+{% block content %}
+<section class="bg-[#1a2030] border border-[#262f44] rounded-xl p-6 mb-6 h-full flex flex-col">
+    <h2 class="text-lg font-bold text-white mb-6 border-b border-[#262f44] pb-4">Detection Input Source</h2>
+    
+    <div class="flex flex-col sm:flex-row gap-6 mb-8">
+        <!-- Offline Tab -->
+        <div class="flex-1" id="mode-offline">
+            <input type="radio" name="capture-mode" id="offline-mode" value="offline" checked class="peer hidden">
+            <label for="offline-mode" class="cursor-pointer flex items-center gap-4 p-5 rounded-xl border-2 border-[#262f44] bg-[#111623] peer-checked:border-blue-500 peer-checked:bg-[#152344] transition-colors relative">
+                <div class="w-12 h-12 rounded-lg bg-blue-500 flex items-center justify-center text-white text-xl shadow-inner">
+                    <i class="fa-solid fa-folder-open"></i>
+                </div>
+                <div class="flex-1">
+                    <span class="block font-semibold text-white text-base">Offline Processing</span>
+                    <span class="block text-sm text-slate-400 mt-1">Upload & analyze video files locally</span>
+                </div>
+                <div class="w-5 h-5 rounded-full border-2 border-slate-500 peer-checked:border-blue-500 flex items-center justify-center ml-auto">
+                    <div class="w-2.5 h-2.5 rounded-full bg-blue-500 hidden peer-checked:block"></div>
+                </div>
+            </label>
+        </div>
+        <!-- Online Tab -->
+        <div class="flex-1" id="mode-online">
+            <input type="radio" name="capture-mode" id="online-mode" value="online" class="peer hidden">
+            <label for="online-mode" class="cursor-pointer flex items-center gap-4 p-5 rounded-xl border-2 border-[#262f44] bg-[#111623] peer-checked:border-blue-500 peer-checked:bg-[#152344] transition-colors relative">
+                <div class="w-12 h-12 rounded-lg bg-purple-700 flex items-center justify-center text-white text-xl shadow-inner">
+                    <i class="fa-solid fa-video"></i>
+                </div>
+                <div class="flex-1">
+                    <span class="block font-semibold text-white text-base">Live Capture</span>
+                    <span class="block text-sm text-slate-400 mt-1">Connect to IP Camera or Webcam</span>
+                </div>
+                <div class="w-5 h-5 rounded-full border-2 border-slate-500 peer-checked:border-blue-500 flex items-center justify-center ml-auto">
+                    <div class="w-2.5 h-2.5 rounded-full bg-blue-500 hidden peer-checked:block"></div>
+                </div>
+            </label>
+        </div>
+    </div>
+
+    <!-- Upload Box (Offline) -->
+    <div id="upload-area" class="video-section border-2 border-dashed border-[#3a4663] bg-[#141a29] rounded-xl p-16 flex-1 flex flex-col items-center justify-center text-center cursor-pointer hover:border-blue-500 hover:bg-[#152344] transition-colors" onclick="document.getElementById('video-input').click()">
+        <div class="w-20 h-20 rounded-full bg-blue-500 mx-auto flex items-center justify-center text-white text-4xl mb-6 shadow-xl shadow-blue-500/20">
+            <i class="fa-solid fa-cloud-arrow-up"></i>
+        </div>
+        <h3 class="text-xl font-bold text-white">Click or drag to upload video for analysis</h3>
+        <p class="text-sm text-slate-400 mt-2">Supports MP4, AVI, MKV up to 500MB</p>
+        <input type="file" id="video-input" accept="video/*" class="hidden">
+    </div>
+    
+    <div id="processing-status" class="mt-4 bg-[#111623] border border-[#262f44] p-6 rounded-lg" style="display:none;">
+        <div class="flex justify-between items-center mb-4">
+            <p id="status-message" class="text-sm font-semibold text-slate-300 flex items-center gap-2">
+                <i class="fa-solid fa-gear fa-spin text-blue-500"></i> AI Model Processing Video...
+            </p>
+            <p id="progress-text" class="text-sm font-bold text-blue-400">0%</p>
+        </div>
+        <div class="w-full bg-[#1e2536] rounded-full h-2.5">
+            <div class="bg-blue-500 h-2.5 rounded-full transition-all duration-300" style="width: 0%" id="progress-fill"></div>
+        </div>
+    </div>
+
+    <!-- Live Capture Controls -->
+    <div id="online-capture-controls" class="flex-1 flex flex-col" style="display:none;">
+        <div class="flex flex-col sm:flex-row gap-4 mb-6">
+            <div class="flex-1 relative">
+                <label class="block text-xs text-slate-400 mb-2 font-bold uppercase tracking-wider">Stream URL or Device ID</label>
+                <input type="text" id="direct-stream-url" placeholder="0 for Webcam, or http://192.168.1.5:8080/video" class="w-full bg-[#111623] border border-[#262f44] text-slate-200 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500">
+            </div>
+            <div class="flex items-end pb-0">
+                <button class="bg-[#1e2536] hover:bg-[#2a3449] text-slate-300 border border-[#262f44] text-sm font-semibold py-3 px-6 rounded-lg transition-colors" onclick="dashboard.saveDirectCameraConfig()">
+                    <i class="fa-solid fa-floppy-disk mr-2"></i> Save Config
+                </button>
+            </div>
+        </div>
+        
+        <div class="bg-[#111623] border border-[#262f44] rounded-lg p-6 flex flex-col items-center flex-1 justify-center relative overflow-hidden">
+            <!-- Camera Feed Box -->
+            <div class="relative w-full max-w-3xl aspect-video bg-black rounded-lg border-2 border-[#262f44] mb-6 flex flex-col items-center justify-center overflow-hidden">
+                <i id="camera-placeholder-icon" class="fa-solid fa-video-slash text-6xl text-slate-700"></i>
+                <img id="camera-feed" class="absolute inset-0 w-full h-full object-cover" style="display:none;" alt="Live Feed">
+                
+                <!-- Status Overlay -->
+                <div id="live-capture-status" class="absolute top-4 left-4 bg-black/60 backdrop-blur-md border border-white/10 p-3 rounded-lg z-10" style="display:none;">
+                    <div class="flex items-center gap-2 mb-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse"></span>
+                        <p id="capture-status-text" class="text-xs font-bold text-white uppercase tracking-wide">Rec</p>
+                    </div>
+                    <div class="flex flex-col gap-1 text-[10px] text-white">
+                        <span>Frames: <strong id="frames-count" class="text-blue-400">0</strong></span>
+                        <span>Violations: <strong id="capture-violations-count" class="text-rose-400">0</strong></span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="flex gap-4">
+                <button id="start-capture-btn" class="bg-[#2563eb] hover:bg-blue-600 text-white font-bold py-3 px-8 rounded-lg transition-colors text-sm shadow-lg shadow-blue-500/30 flex items-center gap-2">
+                    <i class="fa-solid fa-play"></i> Start Stream
+                </button>
+                <button id="stop-capture-btn" class="bg-[#1e2536] hover:bg-[#2a3449] text-rose-400 border border-[#262f44] font-bold py-3 px-8 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2" disabled>
+                    <i class="fa-solid fa-stop"></i> Stop Stream
+                </button>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}?v=2"></script>
+{% endblock %}

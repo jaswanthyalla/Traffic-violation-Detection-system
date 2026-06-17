@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block header_title %}System Settings{% endblock %}
+{% block header_subtitle %}Configure AI models and system preferences{% endblock %}
+
+{% block content %}
+<section class="bg-[#1a2030] border border-[#262f44] rounded-xl overflow-hidden max-w-4xl h-full flex flex-col">
+    <div class="flex border-b border-[#262f44]">
+        <button id="tab-ai" onclick="switchTab('ai')" class="px-6 py-4 text-sm font-bold text-blue-400 border-b-2 border-blue-500 bg-[#152344]">AI Configuration</button>
+        <button id="tab-security" onclick="switchTab('security')" class="px-6 py-4 text-sm font-bold text-slate-400 hover:text-white transition-colors border-b-2 border-transparent">Account Security</button>
+        <button class="px-6 py-4 text-sm font-bold text-slate-400 hover:text-white transition-colors border-b-2 border-transparent">Database</button>
+    </div>
+    
+    <div class="p-8 overflow-y-auto flex-1 relative">
+        <!-- AI CONFIG SECTION -->
+        <div id="content-ai">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Detection Modules</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+                <div class="bg-[#111623] border border-[#262f44] p-5 rounded-xl flex items-start gap-4">
+                    <input type="checkbox" checked class="mt-1 w-5 h-5 rounded bg-[#1e2536] border-[#262f44] text-blue-500 focus:ring-0 focus:ring-offset-0">
+                    <div>
+                        <h4 class="text-sm font-bold text-white mb-1">Helmet Detection (YOLOv8)</h4>
+                        <p class="text-xs text-slate-400">Detects riders without helmets on two-wheelers.</p>
+                    </div>
+                </div>
+                <div class="bg-[#111623] border border-[#262f44] p-5 rounded-xl flex items-start gap-4">
+                    <input type="checkbox" checked class="mt-1 w-5 h-5 rounded bg-[#1e2536] border-[#262f44] text-blue-500 focus:ring-0 focus:ring-offset-0">
+                    <div>
+                        <h4 class="text-sm font-bold text-white mb-1">License Plate OCR</h4>
+                        <p class="text-xs text-slate-400">Extracts text from detected license plates using EasyOCR.</p>
+                    </div>
+                </div>
+                <div class="bg-[#111623] border border-[#262f44] p-5 rounded-xl flex items-start gap-4">
+                    <input type="checkbox" checked class="mt-1 w-5 h-5 rounded bg-[#1e2536] border-[#262f44] text-blue-500 focus:ring-0 focus:ring-offset-0">
+                    <div>
+                        <h4 class="text-sm font-bold text-white mb-1">Overloading Detection</h4>
+                        <p class="text-xs text-slate-400">Flags vehicles with more than 2 passengers.</p>
+                    </div>
+                </div>
+            </div>
+            
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Accuracy Tuning</h3>
+            
+            <div class="bg-[#111623] border border-[#262f44] p-6 rounded-xl max-w-xl mb-8">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h4 class="text-sm font-bold text-white">Base Confidence Threshold</h4>
+                        <p class="text-xs text-slate-400 mt-1">Minimum confidence score required to record a violation.</p>
+                    </div>
+                    <span class="text-lg font-bold text-blue-400 bg-blue-500/10 px-3 py-1 rounded">45%</span>
+                </div>
+                <input type="range" min="0" max="100" value="45" class="w-full h-2 bg-[#262f44] rounded-lg appearance-none cursor-pointer accent-blue-500">
+                <div class="flex justify-between mt-2 text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                    <span>More False Positives</span>
+                    <span>Highly Strict</span>
+                </div>
+            </div>
+            
+            <div class="pt-6 border-t border-[#262f44]">
+                <button class="bg-[#2563eb] hover:bg-blue-600 text-white font-bold py-2.5 px-8 rounded-lg transition-colors text-sm">
+                    Save Configurations
+                </button>
+            </div>
+        </div>
+
+        <!-- SECURITY SECTION -->
+        <div id="content-security" class="hidden">
+            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-6">Change Password</h3>
+            
+            <div class="bg-[#111623] border border-[#262f44] p-6 rounded-xl max-w-md">
+                <div id="pwd-msg" class="hidden px-4 py-3 rounded-lg text-sm font-bold mb-4"></div>
+                
+                <form id="pwd-form" onsubmit="changePassword(event)" class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Current Password</label>
+                        <input type="password" id="current_password" required class="w-full bg-[#1a2030] border border-[#262f44] text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">New Password</label>
+                        <input type="password" id="new_password" required class="w-full bg-[#1a2030] border border-[#262f44] text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Confirm New Password</label>
+                        <input type="password" id="confirm_password" required class="w-full bg-[#1a2030] border border-[#262f44] text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-blue-500">
+                    </div>
+                    
+                    <button type="submit" class="w-full bg-[#2563eb] hover:bg-blue-600 text-white font-bold py-2.5 rounded-lg transition-colors text-sm mt-4">
+                        Update Password
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+<script>
+    function switchTab(tab) {
+        const tabAi = document.getElementById('tab-ai');
+        const tabSec = document.getElementById('tab-security');
+        const contAi = document.getElementById('content-ai');
+        const contSec = document.getElementById('content-security');
+        
+        if (tab === 'ai') {
+            tabAi.className = 'px-6 py-4 text-sm font-bold text-blue-400 border-b-2 border-blue-500 bg-[#152344]';
+            tabSec.className = 'px-6 py-4 text-sm font-bold text-slate-400 hover:text-white transition-colors border-b-2 border-transparent';
+            contAi.classList.remove('hidden');
+            contSec.classList.add('hidden');
+        } else {
+            tabSec.className = 'px-6 py-4 text-sm font-bold text-blue-400 border-b-2 border-blue-500 bg-[#152344]';
+            tabAi.className = 'px-6 py-4 text-sm font-bold text-slate-400 hover:text-white transition-colors border-b-2 border-transparent';
+            contSec.classList.remove('hidden');
+            contAi.classList.add('hidden');
+        }
+    }
+
+    async function changePassword(e) {
+        e.preventDefault();
+        const cur = document.getElementById('current_password').value;
+        const newP = document.getElementById('new_password').value;
+        const conf = document.getElementById('confirm_password').value;
+        const msg = document.getElementById('pwd-msg');
+        
+        if (newP !== conf) {
+            msg.className = 'px-4 py-3 rounded-lg text-sm font-bold mb-4 bg-rose-500/10 text-rose-400 border border-rose-500/30';
+            msg.textContent = 'New passwords do not match.';
+            msg.classList.remove('hidden');
+            return;
+        }
+        
+        try {
+            const res = await fetch('/api/change-password', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ current_password: cur, new_password: newP })
+            });
+            const data = await res.json();
+            
+            if (data.success) {
+                msg.className = 'px-4 py-3 rounded-lg text-sm font-bold mb-4 bg-emerald-500/10 text-emerald-400 border border-emerald-500/30';
+                msg.textContent = 'Password successfully updated!';
+                document.getElementById('pwd-form').reset();
+            } else {
+                msg.className = 'px-4 py-3 rounded-lg text-sm font-bold mb-4 bg-rose-500/10 text-rose-400 border border-rose-500/30';
+                msg.textContent = data.error || 'Failed to update password.';
+            }
+        } catch (err) {
+            msg.className = 'px-4 py-3 rounded-lg text-sm font-bold mb-4 bg-rose-500/10 text-rose-400 border border-rose-500/30';
+            msg.textContent = 'Network error occurred.';
+        }
+        msg.classList.remove('hidden');
+    }
+</script>
+{% endblock %}

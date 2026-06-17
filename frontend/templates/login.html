@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - Traffic Violation System</title>
+    <script src="https://unpkg.com/@tailwindcss/browser@4"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        body { 
+            background-color: #0b1120 !important; 
+            color: #f1f5f9 !important; 
+            font-family: 'Inter', sans-serif !important;
+            margin: 0;
+            overflow-x: hidden;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            transition: background 0.5s ease;
+        }
+    </style>
+</head>
+<body id="body-bg" class="bg-gradient-to-br from-[#0b1120] to-[#122345]">
+
+    <div class="w-full max-w-md px-6">
+        <div class="text-center mb-8">
+            <div id="icon-container" class="w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-3xl mx-auto mb-6 shadow-xl shadow-blue-600/20 transition-colors duration-500">
+                <i id="header-icon" class="fa-solid fa-shield-halved"></i>
+            </div>
+            <h1 class="text-3xl font-bold text-white tracking-wide">TVS Portal</h1>
+            <p class="text-slate-400 mt-2">Sign in to access the monitoring dashboard</p>
+        </div>
+
+        <div id="login-card" class="bg-[#1a2030] border border-blue-500/30 rounded-2xl p-8 shadow-2xl shadow-blue-900/20 transition-all duration-500 relative overflow-hidden">
+            
+            <!-- Glow effect -->
+            <div id="glow-effect" class="absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 blur-3xl rounded-full transition-colors duration-500"></div>
+
+            <!-- Role Selection Tabs -->
+            <div class="flex p-1 bg-[#111623] rounded-lg mb-8 relative z-10">
+                <button type="button" onclick="setRole('admin')" id="tab-admin" class="flex-1 py-2 text-sm font-bold text-white bg-blue-600 rounded-md shadow-lg transition-all duration-300">
+                    <i class="fa-solid fa-user-tie mr-2"></i> Administrator
+                </button>
+                <button type="button" onclick="setRole('operator')" id="tab-operator" class="flex-1 py-2 text-sm font-bold text-slate-400 hover:text-slate-200 transition-all duration-300">
+                    <i class="fa-solid fa-user-police mr-2"></i> Desk Officer
+                </button>
+            </div>
+
+            {% if error %}
+            <div class="bg-rose-500/10 border border-rose-500/30 rounded-lg p-4 mb-6 flex items-start gap-3 relative z-10">
+                <i class="fa-solid fa-triangle-exclamation text-rose-500 mt-0.5"></i>
+                <p class="text-sm text-rose-400 font-medium">{{ error }}</p>
+            </div>
+            {% endif %}
+
+            <form method="POST" action="{{ url_for('login') }}" class="relative z-10">
+                <!-- Hidden input to store selected role -->
+                <input type="hidden" name="role" id="role-input" value="admin">
+
+                <div class="space-y-5">
+                    <div>
+                        <label for="username" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Username / ID</label>
+                        <div class="relative group">
+                            <i id="user-icon" class="fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors"></i>
+                            <input type="text" name="username" id="username" required class="w-full bg-[#111623] border border-[#262f44] text-white rounded-lg pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" placeholder="Enter ID">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label for="password" class="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Password</label>
+                        <div class="relative group">
+                            <i id="lock-icon" class="fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors"></i>
+                            <input type="password" name="password" id="password" required class="w-full bg-[#111623] border border-[#262f44] text-white rounded-lg pl-11 pr-4 py-3 text-sm focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500 transition-colors" placeholder="••••••••">
+                        </div>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-lg transition-colors text-sm shadow-lg shadow-blue-600/30 mt-4 flex items-center justify-center gap-2">
+                        Secure Login <i class="fa-solid fa-arrow-right-to-bracket"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <p class="text-center text-sm text-slate-400 mt-6">
+            Don't have an account? <a href="{{ url_for('signup') }}" id="signup-link" class="text-blue-500 font-bold hover:text-blue-400 transition-colors">Sign Up</a>
+        </p>
+        
+        <p class="text-center text-xs text-slate-500 mt-8">
+            &copy; 2026 Traffic Violation Detection System.<br>Restricted Authority Access Only.
+        </p>
+    </div>
+
+    <script>
+        function setRole(role) {
+            // Update hidden input
+            document.getElementById('role-input').value = role;
+
+            // Elements
+            const tabAdmin = document.getElementById('tab-admin');
+            const tabOperator = document.getElementById('tab-operator');
+            const submitBtn = document.getElementById('submit-btn');
+            const iconContainer = document.getElementById('icon-container');
+            const headerIcon = document.getElementById('header-icon');
+            const loginCard = document.getElementById('login-card');
+            const glowEffect = document.getElementById('glow-effect');
+            const bodyBg = document.getElementById('body-bg');
+            const userIcon = document.getElementById('user-icon');
+            const lockIcon = document.getElementById('lock-icon');
+            const signupLink = document.getElementById('signup-link');
+
+            if (role === 'admin') {
+                // Admin Theme (Blue/Indigo)
+                tabAdmin.className = 'flex-1 py-2 text-sm font-bold text-white bg-blue-600 rounded-md shadow-lg transition-all duration-300';
+                tabOperator.className = 'flex-1 py-2 text-sm font-bold text-slate-400 hover:text-slate-200 transition-all duration-300';
+                
+                submitBtn.className = 'w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 px-4 rounded-lg transition-colors text-sm shadow-lg shadow-blue-600/30 mt-4 flex items-center justify-center gap-2';
+                iconContainer.className = 'w-16 h-16 rounded-2xl bg-blue-600 flex items-center justify-center text-white text-3xl mx-auto mb-6 shadow-xl shadow-blue-600/20 transition-colors duration-500';
+                headerIcon.className = 'fa-solid fa-shield-halved';
+                
+                loginCard.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+                loginCard.style.boxShadow = '0 25px 50px -12px rgba(30, 58, 138, 0.2)';
+                glowEffect.className = 'absolute -top-24 -right-24 w-48 h-48 bg-blue-500/10 blur-3xl rounded-full transition-colors duration-500';
+                bodyBg.className = 'bg-gradient-to-br from-[#0b1120] to-[#122345]';
+                
+                userIcon.className = 'fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors';
+                lockIcon.className = 'fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-500 transition-colors';
+                signupLink.className = 'text-blue-500 font-bold hover:text-blue-400 transition-colors';
+
+            } else {
+                // Officer Theme (Emerald/Teal)
+                tabOperator.className = 'flex-1 py-2 text-sm font-bold text-white bg-emerald-600 rounded-md shadow-lg transition-all duration-300';
+                tabAdmin.className = 'flex-1 py-2 text-sm font-bold text-slate-400 hover:text-slate-200 transition-all duration-300';
+                
+                submitBtn.className = 'w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-3.5 px-4 rounded-lg transition-colors text-sm shadow-lg shadow-emerald-600/30 mt-4 flex items-center justify-center gap-2';
+                iconContainer.className = 'w-16 h-16 rounded-2xl bg-emerald-600 flex items-center justify-center text-white text-3xl mx-auto mb-6 shadow-xl shadow-emerald-600/20 transition-colors duration-500';
+                headerIcon.className = 'fa-solid fa-user-police';
+                
+                loginCard.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+                loginCard.style.boxShadow = '0 25px 50px -12px rgba(6, 78, 59, 0.2)';
+                glowEffect.className = 'absolute -top-24 -right-24 w-48 h-48 bg-emerald-500/10 blur-3xl rounded-full transition-colors duration-500';
+                bodyBg.className = 'bg-gradient-to-br from-[#0b1120] to-[#062c22]';
+                
+                userIcon.className = 'fa-solid fa-user absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors';
+                lockIcon.className = 'fa-solid fa-lock absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-emerald-500 transition-colors';
+                signupLink.className = 'text-emerald-500 font-bold hover:text-emerald-400 transition-colors';
+            }
+        }
+    </script>
+</body>
+</html>

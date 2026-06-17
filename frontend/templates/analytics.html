@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+{% block header_title %}Analytics & Intelligence{% endblock %}
+{% block header_subtitle %}Advanced statistics and detection trends{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}?v=2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        try {
+            const res = await fetch('/api/stats');
+            const data = await res.json();
+            
+            if (data.success && data.stats) {
+                const stats = data.stats;
+                
+                const ctx1 = document.getElementById('trendChart').getContext('2d');
+                new Chart(ctx1, {
+                    type: 'line',
+                    data: {
+                        labels: stats.trend_labels,
+                        datasets: [{
+                            label: 'Total Violations',
+                            data: stats.trend_data,
+                            borderColor: '#8b5cf6',
+                            tension: 0.4,
+                            borderWidth: 3
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#94a3b8' } } },
+                        scales: {
+                            y: { grid: { color: '#262f44' }, ticks: { color: '#94a3b8' }, beginAtZero: true },
+                            x: { grid: { color: '#262f44' }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
+
+                const bgColors = ['#8b5cf6', '#f59e0b', '#ef4444', '#10b981', '#3b82f6'];
+                const ctx2 = document.getElementById('typeChart').getContext('2d');
+                new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: stats.type_labels,
+                        datasets: [{
+                            data: stats.type_data,
+                            backgroundColor: bgColors.slice(0, stats.type_labels.length),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 20 } } }
+                    }
+                });
+
+                // Financial Charts
+                window.financeStats = stats;
+                const fCtx1 = document.getElementById('financeTrendChart').getContext('2d');
+                window.financeTrendChartInstance = new Chart(fCtx1, {
+                    type: 'line',
+                    data: {
+                        labels: stats.trend_labels,
+                        datasets: [
+                            {
+                                label: 'Paid Tickets',
+                                data: stats.finance_trend_paid,
+                                borderColor: '#10b981',
+                                tension: 0.4,
+                                borderWidth: 3
+                            },
+                            {
+                                label: 'Pending Tickets',
+                                data: stats.finance_trend_pending,
+                                borderColor: '#f59e0b',
+                                tension: 0.4,
+                                borderWidth: 3
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { legend: { labels: { color: '#94a3b8' } } },
+                        scales: {
+                            y: { grid: { color: '#262f44' }, ticks: { color: '#94a3b8' }, beginAtZero: true },
+                            x: { grid: { color: '#262f44' }, ticks: { color: '#94a3b8' } }
+                        }
+                    }
+                });
+
+                window.updateFinanceTrend = function(type) {
+                    const chart = window.financeTrendChartInstance;
+                    const stats = window.financeStats;
+                    
+                    // Update active button styles
+                    ['daily', 'weekly', 'monthly'].forEach(t => {
+                        const btn = document.getElementById(`btn-trend-${t}`);
+                        if (t === type) {
+                            btn.className = "text-xs px-3 py-1 rounded text-white bg-[#2563eb] transition-colors";
+                        } else {
+                            btn.className = "text-xs px-3 py-1 rounded text-slate-400 hover:text-white transition-colors";
+                        }
+                    });
+
+                    if (type === 'daily') {
+                        chart.data.labels = stats.trend_labels;
+                        chart.data.datasets[0].data = stats.finance_trend_paid;
+                        chart.data.datasets[1].data = stats.finance_trend_pending;
+                    } else if (type === 'weekly') {
+                        chart.data.labels = stats.finance_trend_weekly_labels;
+                        chart.data.datasets[0].data = stats.finance_trend_weekly_paid;
+                        chart.data.datasets[1].data = stats.finance_trend_weekly_pending;
+                    } else if (type === 'monthly') {
+                        chart.data.labels = stats.finance_trend_monthly_labels;
+                        chart.data.datasets[0].data = stats.finance_trend_monthly_paid;
+                        chart.data.datasets[1].data = stats.finance_trend_monthly_pending;
+                    }
+                    chart.update();
+                };
+
+                const fCtx2 = document.getElementById('revenueChart').getContext('2d');
+                new Chart(fCtx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: stats.revenue_labels.length ? stats.revenue_labels : ['No Revenue'],
+                        datasets: [{
+                            data: stats.revenue_data.length ? stats.revenue_data : [1],
+                            backgroundColor: bgColors.slice(0, stats.revenue_labels.length || 1),
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: { 
+                            legend: { position: 'bottom', labels: { color: '#94a3b8', padding: 20 } },
+                            tooltip: { callbacks: { label: function(context) { return ' ₹' + context.parsed; } } }
+                        }
+                    }
+                });
+
+            }
+        } catch (err) {
+            console.error("Failed to load chart data:", err);
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<div class="flex justify-between items-center mb-6">
+    <h2 class="text-xl font-bold text-white">System Analytics</h2>
+    <button onclick="document.getElementById('financial-modal').style.display='flex'" class="bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-2.5 px-5 rounded-lg flex items-center gap-2 transition-colors shadow-lg">
+        <i class="fa-solid fa-sack-dollar"></i> Financial Trends 💰
+    </button>
+</div>
+
+<!-- Financial Modal -->
+<div id="financial-modal" class="fixed inset-0 bg-black/80 z-[100] hidden items-center justify-center p-4">
+    <div class="bg-[#1a2030] border border-[#262f44] rounded-xl w-full max-w-6xl max-h-[90vh] overflow-y-auto flex flex-col shadow-2xl">
+        <div class="flex justify-between items-center p-6 border-b border-[#262f44] bg-[#1e2536] sticky top-0 z-10">
+            <h3 class="text-xl font-bold text-white flex items-center gap-2">
+                <i class="fa-solid fa-chart-line text-emerald-400"></i> Financial Trend Analytics
+            </h3>
+            <button onclick="document.getElementById('financial-modal').style.display='none'" class="text-slate-400 hover:text-white transition-colors">
+                <i class="fa-solid fa-xmark text-2xl"></i>
+            </button>
+        </div>
+        <div class="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+            <div class="lg:col-span-2 bg-[#111623] border border-[#262f44] rounded-xl p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h4 class="text-sm font-bold text-slate-300 flex items-center gap-2">
+                        <i class="fa-solid fa-calendar-week text-blue-400"></i> Ticket Payment Trends
+                    </h4>
+                    <div class="flex bg-[#1a2030] rounded-lg p-1 gap-1">
+                        <button onclick="updateFinanceTrend('daily')" class="text-xs px-3 py-1 rounded text-white bg-[#2563eb] transition-colors" id="btn-trend-daily">Daily</button>
+                        <button onclick="updateFinanceTrend('weekly')" class="text-xs px-3 py-1 rounded text-slate-400 hover:text-white transition-colors" id="btn-trend-weekly">Weekly</button>
+                        <button onclick="updateFinanceTrend('monthly')" class="text-xs px-3 py-1 rounded text-slate-400 hover:text-white transition-colors" id="btn-trend-monthly">Monthly</button>
+                    </div>
+                </div>
+                <div class="h-80 w-full">
+                    <canvas id="financeTrendChart"></canvas>
+                </div>
+            </div>
+            <div class="bg-[#111623] border border-[#262f44] rounded-xl p-6">
+                <h4 class="text-sm font-bold text-slate-300 mb-6 flex items-center gap-2">
+                    <i class="fa-solid fa-wallet text-emerald-400"></i> Collected Revenue by Category
+                </h4>
+                <div class="h-64 w-full">
+                    <canvas id="revenueChart"></canvas>
+                </div>
+                <div class="mt-6 pt-6 border-t border-[#262f44] text-center">
+                    <p class="text-[11px] text-slate-400">This chart only reflects tickets marked as <strong>Paid</strong>.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Stats Grid -->
+<section class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-6">
+    <!-- Total -->
+    <div class="bg-[#0f213b] border border-[#1e3a8a] rounded-xl p-4 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-[#1a498b] flex flex-shrink-0 items-center justify-center text-white text-2xl shadow-inner">
+            <i class="fa-solid fa-clipboard-list"></i>
+        </div>
+        <div>
+            <h3 class="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">Total Violations</h3>
+            <p class="text-2xl font-bold text-white leading-none mb-1" id="stat-total">0</p>
+            <p class="text-[10px] text-slate-400">All time recorded</p>
+        </div>
+    </div>
+    <!-- 24h -->
+    <div class="bg-[#0f2d1e] border border-[#065f46] rounded-xl p-4 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-[#127236] flex flex-shrink-0 items-center justify-center text-white text-2xl shadow-inner">
+            <i class="fa-solid fa-clock-rotate-left"></i>
+        </div>
+        <div>
+            <h3 class="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">Last 24 Hours</h3>
+            <p class="text-2xl font-bold text-white leading-none mb-1" id="stat-24h">0</p>
+            <p class="text-[10px] text-slate-400">Violations detected</p>
+        </div>
+    </div>
+    <!-- Helmet -->
+    <div class="bg-[#291742] border border-[#4c1d95] rounded-xl p-4 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-[#5d2192] flex flex-shrink-0 items-center justify-center text-white text-2xl shadow-inner">
+            <i class="fa-solid fa-helmet-safety"></i>
+        </div>
+        <div>
+            <h3 class="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">No Helmet</h3>
+            <p class="text-2xl font-bold text-white leading-none mb-1" id="stat-helmet">0</p>
+            <p class="text-[10px] text-slate-400">Violations detected</p>
+        </div>
+    </div>
+    <!-- Overloading -->
+    <div class="bg-[#331c0e] border border-[#78350f] rounded-xl p-4 flex items-center gap-4">
+        <div class="w-14 h-14 rounded-xl bg-[#b05e15] flex flex-shrink-0 items-center justify-center text-white text-2xl shadow-inner">
+            <i class="fa-solid fa-triangle-exclamation"></i>
+        </div>
+        <div>
+            <h3 class="text-[11px] font-bold text-slate-300 uppercase tracking-widest mb-1">Overloading</h3>
+            <p class="text-2xl font-bold text-white leading-none mb-1" id="stat-overload">0</p>
+            <p class="text-[10px] text-slate-400">Violations detected</p>
+        </div>
+    </div>
+</section>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="lg:col-span-2 bg-[#1a2030] border border-[#262f44] rounded-xl p-6">
+        <h3 class="text-sm font-bold text-white mb-6">7-Day Violation Trends</h3>
+        <div class="h-80 w-full">
+            <canvas id="trendChart"></canvas>
+        </div>
+    </div>
+    <div class="bg-[#1a2030] border border-[#262f44] rounded-xl p-6">
+        <h3 class="text-sm font-bold text-white mb-6">Violation Breakdown</h3>
+        <div class="h-64 w-full">
+            <canvas id="typeChart"></canvas>
+        </div>
+        <div class="mt-6 pt-6 border-t border-[#262f44] text-center">
+            <p class="text-xs text-slate-400">Highest compliance gap: <strong class="text-purple-400">Helmet Usage</strong></p>
+        </div>
+    </div>
+</div>
+{% endblock %}
